@@ -10,23 +10,31 @@ const app = express();
 const prisma = new PrismaClient();
 
 // Middleware
+const corsOrigins: (string | RegExp)[] = process.env.NODE_ENV === 'production'
+  ? [
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []), 
+      ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+      // Allow Expo development URLs
+      /^exp:\/\/.*/, 
+      /^https?:\/\/.*\.expo\.dev$/,
+      // Allow localhost for testing
+      'http://localhost:8081',
+      'https://localhost:8081'
+    ]
+  : [
+      'http://localhost:8081', 
+      'http://192.168.1.107:8081', 
+      'exp://192.168.1.107:8081',
+      /^exp:\/\/.*/
+    ];
+
 app.use(cors({
-  origin: ['http://localhost:8081', 'http://10.189.43.36:8081', 'exp://10.189.43.36:8081'],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
-
-// Routes
-app.get("/", (req, res) => {
-  console.log("Health check endpoint accessed");
-  res.json({ 
-    message: "Expense Tracker API is running...",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
 
 // Routes
 app.get("/", (req, res) => {
@@ -61,6 +69,6 @@ const PORT = Number(process.env.PORT) || 4000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
-  console.log(`Server running on http://10.189.43.36:${PORT}`);
-  console.log(`Also available on http://localhost:${PORT}`);
+  console.log(`Server running on ${HOST}:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
