@@ -45,7 +45,12 @@ export const register = async (req: any, res: Response) => {
       token
     });
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
     
     // Handle Prisma specific errors
     if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
@@ -54,7 +59,8 @@ export const register = async (req: any, res: Response) => {
     
     res.status(500).json({ 
       error: 'Internal server error',
-      message: 'Registration failed. Please try again.'
+      message: 'Registration failed. Please try again.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
